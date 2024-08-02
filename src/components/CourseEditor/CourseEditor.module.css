@@ -1,0 +1,12 @@
+.markdownEditor {
+  background-color: #1f1f1f;
+  color: #ffffff;
+  border-radius: 5px;
+  border: 1px solid #333;
+}
+
+.markdownPreview {
+  background-color: #1f1f1f;
+  color: #ffffff;
+  border: 1px solid #333;
+}
