@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Route, Routes, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import {
+  BrowserRouter as Router,
+  Route,
+  Routes,
+  Link,
+  useLocation,
+  Navigate,
+  useNavigate,
+} from 'react-router-dom';
 import {
   AppBar,
   Toolbar,
@@ -13,6 +21,8 @@ import {
   Container,
   Box,
   Typography,
+  Button,
+  ThemeProvider,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -22,6 +32,7 @@ import {
   Menu as MenuIcon,
   AccountCircle as ProfileIcon,
   Settings as SettingsIcon,
+  ExitToApp as ExitToAppIcon,
 } from '@mui/icons-material';
 
 import Login from './pages/Login';
@@ -33,8 +44,21 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Courses from './pages/Courses';
 import CourseModulesEditor from './components/CourseModulesEditor/CourseModulesEditor';
+import lightTheme from './utils/theme';
 
-const App: React.FC = () => {
+const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? children : <Navigate to="/login" />;
+};
+
+const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
+  const token = localStorage.getItem('token');
+  return token ? <Navigate to="/" /> : children;
+};
+
+const AppContent: React.FC = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -54,20 +78,26 @@ const App: React.FC = () => {
     };
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/login');
+  };
+
   const drawer = (
     <Box sx={{ width: 250 }}>
       <List>
-        <ListItem button component={Link} to="/profile" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <ProfileIcon />
-          </ListItemIcon>
-          <ListItemText primary="Профиль" />
-        </ListItem>
         <ListItem button component={Link} to="/" onClick={toggleDrawer}>
           <ListItemIcon>
             <DashboardIcon />
           </ListItemIcon>
           <ListItemText primary="Панель управления" />
+        </ListItem>
+        <ListItem button component={Link} to="/profile" onClick={toggleDrawer}>
+          <ListItemIcon>
+            <ProfileIcon />
+          </ListItemIcon>
+          <ListItemText primary="Профиль" />
         </ListItem>
         <ListItem button component={Link} to="/users" onClick={toggleDrawer}>
           <ListItemIcon>
@@ -87,95 +117,173 @@ const App: React.FC = () => {
           </ListItemIcon>
           <ListItemText primary="Прогресс пользователей" />
         </ListItem>
-
         <ListItem button component={Link} to="/settings" onClick={toggleDrawer}>
           <ListItemIcon>
             <SettingsIcon />
           </ListItemIcon>
           <ListItemText primary="Настройки" />
         </ListItem>
+        <ListItem button onClick={handleLogout}>
+          <ListItemIcon>
+            <ExitToAppIcon />
+          </ListItemIcon>
+          <ListItemText primary="Выйти" />
+        </ListItem>
       </List>
     </Box>
   );
 
+  const hideAppBarAndDrawer =
+    location.pathname === '/login' || location.pathname === '/register';
+
   return (
-    <Router>
-      <Box sx={{ display: 'flex' }}>
-        <CssBaseline />
-        <AppBar
-          position="fixed"
-          sx={{ zIndex: theme => theme.zIndex.drawer + 1, background: '#1f1f1f' }}
-        >
-          <Toolbar>
-            {isMobile && (
-              <IconButton
-                color="inherit"
-                edge="start"
-                onClick={toggleDrawer}
-                sx={{ mr: 2 }}
-              >
-                <MenuIcon />
-              </IconButton>
-            )}
-            <Typography variant="h6" noWrap component="div">
-              Платформа курсов по беспилотным системам
-            </Typography>
-          </Toolbar>
-        </AppBar>
-        {isMobile ? (
-          <Drawer
-            anchor="left"
-            open={drawerOpen}
-            onClose={toggleDrawer}
-            sx={{
-              '& .MuiDrawer-paper': {
-                boxSizing: 'border-box',
+    <Box sx={{ display: 'flex' }}>
+      <CssBaseline />
+      {!hideAppBarAndDrawer && (
+        <>
+          <AppBar position="fixed" sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
+            <Toolbar>
+              {isMobile && (
+                <IconButton
+                  color="inherit"
+                  edge="start"
+                  onClick={toggleDrawer}
+                  sx={{ mr: 2 }}
+                >
+                  <MenuIcon />
+                </IconButton>
+              )}
+              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
+                Платформа курсов по беспилотным системам
+              </Typography>
+            </Toolbar>
+          </AppBar>
+          {isMobile ? (
+            <Drawer
+              anchor="left"
+              open={drawerOpen}
+              onClose={toggleDrawer}
+              sx={{
+                '& .MuiDrawer-paper': {
+                  boxSizing: 'border-box',
+                  width: 250,
+                  background: '#ffffff',
+                },
+              }}
+            >
+              {drawer}
+            </Drawer>
+          ) : (
+            <Drawer
+              variant="permanent"
+              sx={{
                 width: 250,
-                background: '#141414',
-              },
-            }}
-          >
-            {drawer}
-          </Drawer>
-        ) : (
-          <Drawer
-            variant="permanent"
-            sx={{
-              width: 250,
-              flexShrink: 0,
-              '& .MuiDrawer-paper': {
-                width: 250,
-                boxSizing: 'border-box',
-                background: '#141414',
-              },
-            }}
-          >
-            <Toolbar />
-            {drawer}
-          </Drawer>
-        )}
-        <Box
-          component="main"
-          sx={{ flexGrow: 1, p: 3, background: '#1f1f1f', minHeight: '100vh' }}
-        >
-          <Toolbar />
-          <Container>
-            <Routes>
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/course-editor" element={<Courses />} />
-              <Route path="/create-course" element={<CourseEditor />} />
-              <Route path="/user-progress" element={<UserProgress />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/edit-course/:courseId" element={<CourseModulesEditor />} />
-            </Routes>
-          </Container>
-        </Box>
+                flexShrink: 0,
+                '& .MuiDrawer-paper': {
+                  width: 250,
+                  boxSizing: 'border-box',
+                  background: '#ffffff',
+                },
+              }}
+            >
+              <Toolbar />
+              {drawer}
+            </Drawer>
+          )}
+        </>
+      )}
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, p: 3, background: '#EDEDED', minHeight: '100vh' }} // Серый фон в стиле ВКонтакте
+      >
+        <Toolbar />
+        <Container>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <PublicRoute>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/register"
+              element={
+                <PublicRoute>
+                  <Register />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute>
+                  <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/course-editor"
+              element={
+                <ProtectedRoute>
+                  <Courses />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/create-course"
+              element={
+                <ProtectedRoute>
+                  <CourseEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/user-progress"
+              element={
+                <ProtectedRoute>
+                  <UserProgress />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edit-course/:courseId"
+              element={
+                <ProtectedRoute>
+                  <CourseModulesEditor />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+        </Container>
       </Box>
-    </Router>
+    </Box>
   );
 };
+
+const App: React.FC = () => (
+  <ThemeProvider theme={lightTheme}>
+    <Router>
+      <AppContent />
+    </Router>
+  </ThemeProvider>
+);
 
 export default App;

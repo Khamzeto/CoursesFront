@@ -3,7 +3,7 @@ import { Box, Typography, Paper, TextField, Button, Grid } from '@mui/material';
 
 const Settings: React.FC = () => {
   return (
-    <Paper sx={{ padding: 3, backgroundColor: '#141414', color: '#ffffff' }}>
+    <Paper sx={{ padding: 3 }}>
       <Typography variant="h6" gutterBottom>
         Настройки
       </Typography>
@@ -15,7 +15,6 @@ const Settings: React.FC = () => {
           variant="outlined"
           fullWidth
           required
-          sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
         />
         <TextField
           name="newPassword"
@@ -24,7 +23,6 @@ const Settings: React.FC = () => {
           variant="outlined"
           fullWidth
           required
-          sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
         />
         <TextField
           name="confirmPassword"
@@ -33,7 +31,6 @@ const Settings: React.FC = () => {
           variant="outlined"
           fullWidth
           required
-          sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
         />
         <Button variant="contained" type="submit" sx={{ backgroundColor: '#1DA57A' }}>
           Обновить пароль

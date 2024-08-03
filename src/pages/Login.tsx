@@ -1,14 +1,41 @@
-import React from 'react';
-import { Container, Box, TextField, Button, Typography } from '@mui/material';
+import React, { useState } from 'react';
+import { Container, Box, TextField, Button, Typography, Link } from '@mui/material';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
+import $api from '../api/axiosInstance';
 
 const Login: React.FC = () => {
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const navigate = useNavigate();
+  const [error, setError] = useState('');
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      username: data.get('username'),
-      password: data.get('password'),
-    });
+    const loginData = {
+      username: data.get('email')?.toString() || '',
+      password: data.get('password')?.toString() || '',
+    };
+
+    try {
+      const response = await $api.post('/api/v1/auth/login', loginData);
+      if (response.data) {
+        // Сохранение access токена
+        localStorage.setItem('token', response.data.access);
+        console.log('Login successful:', response.data);
+        console.log('Token saved in localStorage:', localStorage.getItem('token'));
+
+        // Fetch user information
+        const userResponse = await $api.get('/api/v1/profile');
+        console.log('User information:', userResponse.data);
+
+        // Сохранение данных пользователя
+        localStorage.setItem('user', JSON.stringify(userResponse.data));
+
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+      setError('Login failed. Please check your email and password.');
+    }
   };
 
   return (
@@ -29,10 +56,10 @@ const Login: React.FC = () => {
             margin="normal"
             required
             fullWidth
-            id="username"
-            label="Имя пользователя"
-            name="username"
-            autoComplete="username"
+            id="email"
+            label="Электронная почта"
+            name="email"
+            autoComplete="email"
             autoFocus
           />
           <TextField
@@ -53,6 +80,19 @@ const Login: React.FC = () => {
           >
             Войти
           </Button>
+          {error && (
+            <Typography color="error" sx={{ mt: 2 }}>
+              {error}
+            </Typography>
+          )}
+          <Box display="flex" justifyContent="space-between" width="100%">
+            <Link component={RouterLink} to="/register" variant="body2">
+              Нет аккаунта? Зарегистрироваться
+            </Link>
+            <Link component={RouterLink} to="/forgot-password" variant="body2">
+              Забыли пароль?
+            </Link>
+          </Box>
         </Box>
       </Box>
     </Container>

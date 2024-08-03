@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Table,
-  TableBody,
-  TableCell,
   TableContainer,
+  Table,
   TableHead,
   TableRow,
+  TableCell,
+  TableBody,
   Paper,
   Button,
+  Box,
 } from '@mui/material';
-import { Box } from '@mui/system';
 import { Inbox as InboxIcon } from '@mui/icons-material';
 import axios from 'axios';
 
@@ -34,21 +34,21 @@ const UserManagement: React.FC = () => {
   };
 
   return (
-    <TableContainer component={Paper} sx={{ backgroundColor: '#141414' }}>
-      <Table sx={{ minWidth: 650, backgroundColor: '#141414' }} aria-label="user table">
+    <TableContainer component={Paper}>
+      <Table sx={{ minWidth: 650 }} aria-label="user table">
         <TableHead>
           <TableRow>
-            <TableCell sx={{ color: '#ffffff' }}>Имя пользователя</TableCell>
-            <TableCell sx={{ color: '#ffffff' }}>Роль</TableCell>
-            <TableCell sx={{ color: '#ffffff' }}>Действия</TableCell>
+            <TableCell>Имя пользователя</TableCell>
+            <TableCell>Роль</TableCell>
+            <TableCell>Действия</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
           {users.length > 0 ? (
             users.map(user => (
               <TableRow key={user.key}>
-                <TableCell sx={{ color: '#ffffff' }}>{user.username}</TableCell>
-                <TableCell sx={{ color: '#ffffff' }}>{user.role}</TableCell>
+                <TableCell>{user.username}</TableCell>
+                <TableCell>{user.role}</TableCell>
                 <TableCell>
                   <Button
                     variant="contained"
@@ -62,7 +62,7 @@ const UserManagement: React.FC = () => {
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={3} align="center" sx={{ color: '#ffffff' }}>
+              <TableCell colSpan={3} align="center">
                 <Box display="flex" justifyContent="center" alignItems="center">
                   <InboxIcon sx={{ mr: 1 }} />
                   No data

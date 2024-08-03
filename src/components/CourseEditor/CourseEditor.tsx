@@ -1,55 +1,56 @@
 import React, { useState } from 'react';
-import { Box, TextField, Button, Typography, Paper, Grid, Input } from '@mui/material';
-import styles from './CourseEditor.module.css';
+import { Box, TextField, Button, Typography, Paper, Grid } from '@mui/material';
+import axios from 'axios';
+import $api, { API_URL } from '../../api/axiosInstance'; // Убедитесь, что путь к файлу верен
 
 const CourseEditor: React.FC = () => {
-  const [image, setImage] = useState<string | ArrayBuffer | null>(null);
+  const [image, setImage] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setImage(file);
     }
   };
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const courseData = {
-      title,
-      description,
-      image,
-    };
-    console.log('Course data:', courseData);
-    // Сохранить данные курса или выполнить другие действия
+
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('description', description);
+    formData.append('preview', image || '');
+
+    try {
+      const response = await $api.post('/api/v1/courses', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      console.log('Course saved successfully:', response.data);
+    } catch (error) {
+      console.error('Error saving course:', error);
+    }
   };
 
   return (
-    <Paper sx={{ padding: 3, backgroundColor: '#141414' }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
+    <Paper sx={{ padding: 3 }}>
+      <Typography variant="h6" gutterBottom>
         Создание курса
       </Typography>
       <Box component="form" onSubmit={handleSubmit}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <input
-              accept="image/*"
-              type="file"
-              onChange={handleImageChange}
-              style={{ color: '#ffffff' }}
-            />
+            <input accept="image/*" type="file" onChange={handleImageChange} />
           </Grid>
 
           <Grid item xs={12}>
             {image && (
               <Box
                 component="img"
-                src={image as string}
+                src={URL.createObjectURL(image)}
                 alt="Course"
                 sx={{
                   width: '100%',
@@ -69,7 +70,6 @@ const CourseEditor: React.FC = () => {
               required
               value={title}
               onChange={e => setTitle(e.target.value)}
-              sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -83,7 +83,6 @@ const CourseEditor: React.FC = () => {
               rows={4}
               value={description}
               onChange={e => setDescription(e.target.value)}
-              sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
             />
           </Grid>
           <Grid item xs={12}>

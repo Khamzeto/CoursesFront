@@ -46,17 +46,13 @@ const Courses: React.FC = () => {
 
   return (
     <Box sx={{ flexGrow: 1, padding: 3 }}>
-      <Button
-        variant="contained"
-        onClick={handleCreateCourse}
-        sx={{ marginBottom: 3, backgroundColor: '#1DA57A' }}
-      >
+      <Button variant="contained" onClick={handleCreateCourse} sx={{ marginBottom: 3 }}>
         Создать курс
       </Button>
       <Grid container spacing={3}>
         {courses.map(course => (
           <Grid item xs={12} sm={6} md={4} key={course.id}>
-            <Card sx={{ backgroundColor: '#1f1f1f', color: '#ffffff' }}>
+            <Card>
               <CardMedia
                 component="img"
                 height="140"
@@ -64,28 +60,25 @@ const Courses: React.FC = () => {
                 alt={course.title}
               />
               <CardContent>
-                <Typography
-                  gutterBottom
-                  variant="h5"
-                  component="div"
-                  sx={{ color: '#ffffff' }}
-                >
+                <Typography gutterBottom variant="h5" component="div">
                   {course.title}
                 </Typography>
                 <Typography
                   variant="body2"
                   color="text.secondary"
-                  sx={{ color: '#cccccc' }}
+                  sx={{ marginTop: 2, marginBottom: 2 }} // Добавление margin
                 >
                   {course.description}
                 </Typography>
-                <Button
-                  variant="contained"
-                  sx={{ marginTop: 2, backgroundColor: '#1DA57A' }}
-                  onClick={() => handleEditModules(course.id)}
-                >
-                  Редактировать модули
-                </Button>
+                <Box display="flex" justifyContent="center" width="100%">
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    onClick={() => handleEditModules(course.id)}
+                  >
+                    Редактировать
+                  </Button>
+                </Box>
               </CardContent>
             </Card>
           </Grid>

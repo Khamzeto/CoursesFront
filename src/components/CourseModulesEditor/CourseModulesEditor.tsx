@@ -8,15 +8,16 @@ import {
   Grid,
   Typography,
   Paper,
-  Input,
 } from '@mui/material';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
-import styles from './CourseModulesEditor.module.css';
+import TestEditor from '../TestEditor/TestEditor';
 
 const CourseModulesEditor: React.FC = () => {
-  const [modules, setModules] = useState<Array<{ type: string; content: string }>>([]);
+  const [mainModules, setMainModules] = useState<
+    Array<{ title: string; submodules: Array<{ type: string; content: any }> }>
+  >([]);
   const [image, setImage] = useState<string | ArrayBuffer | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -27,20 +28,37 @@ const CourseModulesEditor: React.FC = () => {
     // setTitle('Название курса');
     // setDescription('Описание курса');
     // setImage('ссылка_на_изображение');
-    // setModules([{ type: 'lecture', content: 'Содержимое лекции' }]);
+    // setMainModules([{ title: 'Главный модуль', submodules: [{ type: 'lecture', content: 'Содержимое лекции' }] }]);
   }, []);
 
-  const addModule = () => {
-    setModules([...modules, { type: '', content: '' }]);
+  const addMainModule = () => {
+    setMainModules([...mainModules, { title: '', submodules: [] }]);
   };
 
-  const handleModuleChange = (index: number, key: 'type' | 'content', value: string) => {
-    const newModules = [...modules];
-    newModules[index] = {
-      ...newModules[index],
+  const handleMainModuleChange = (index: number, key: 'title', value: string) => {
+    const newMainModules = [...mainModules];
+    newMainModules[index][key] = value;
+    setMainModules(newMainModules);
+  };
+
+  const addSubmodule = (mainIndex: number) => {
+    const newMainModules = [...mainModules];
+    newMainModules[mainIndex].submodules.push({ type: '', content: '' });
+    setMainModules(newMainModules);
+  };
+
+  const handleSubmoduleChange = (
+    mainIndex: number,
+    subIndex: number,
+    key: 'type' | 'content',
+    value: any
+  ) => {
+    const newMainModules = [...mainModules];
+    newMainModules[mainIndex].submodules[subIndex] = {
+      ...newMainModules[mainIndex].submodules[subIndex],
       [key]: value,
     };
-    setModules(newModules);
+    setMainModules(newMainModules);
   };
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -61,28 +79,22 @@ const CourseModulesEditor: React.FC = () => {
       title,
       description,
       image,
-      modules,
+      mainModules,
     };
     console.log('Course data:', courseData);
     // Сохранить данные курса или выполнить другие действия
   };
 
   return (
-    <Paper sx={{ padding: 3, backgroundColor: '#141414' }}>
-      <Typography variant="h6" gutterBottom sx={{ color: '#ffffff' }}>
+    <Paper sx={{ padding: 3 }}>
+      <Typography variant="h6" gutterBottom>
         Редактирование курса
       </Typography>
       <Box component="form" onSubmit={onFinish}>
         <Grid container spacing={2}>
           <Grid item xs={12}>
-            <input
-              accept="image/*"
-              type="file"
-              onChange={handleImageChange}
-              style={{ color: '#ffffff' }}
-            />
+            <input accept="image/*" type="file" onChange={handleImageChange} />
           </Grid>
-
           <Grid item xs={12}>
             {image && (
               <Box
@@ -107,7 +119,6 @@ const CourseModulesEditor: React.FC = () => {
               required
               value={title}
               onChange={e => setTitle(e.target.value)}
-              sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
             />
           </Grid>
           <Grid item xs={12}>
@@ -121,65 +132,117 @@ const CourseModulesEditor: React.FC = () => {
               rows={4}
               value={description}
               onChange={e => setDescription(e.target.value)}
-              sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
             />
           </Grid>
         </Grid>
-        {modules.map((module, index) => (
-          <Box key={index} sx={{ marginBottom: 2 }}>
-            <Grid container spacing={2}>
-              <Grid item xs={12}>
-                <Select
-                  value={module.type}
-                  onChange={e => handleModuleChange(index, 'type', e.target.value)}
-                  displayEmpty
-                  fullWidth
-                  sx={{ color: '#ffffff' }}
-                >
-                  <MenuItem value="" disabled>
-                    Выберите тип модуля
-                  </MenuItem>
-                  <MenuItem value="lecture">Лекция</MenuItem>
-                  <MenuItem value="practice">Практика</MenuItem>
-                  <MenuItem value="test">Тест</MenuItem>
-                  <MenuItem value="simulation">Симуляция</MenuItem>
-                </Select>
-              </Grid>
-              {module.type === 'lecture' && (
-                <Grid item xs={12} sx={{ marginTop: 2 }}>
-                  <MDEditor
-                    value={module.content}
-                    onChange={value => handleModuleChange(index, 'content', value || '')}
-                    className={styles.markdownEditor}
-                    height={400}
-                    previewOptions={{
-                      className: styles.markdownPreview,
-                    }}
-                  />
+        {mainModules.map((mainModule, mainIndex) => (
+          <Box key={mainIndex} sx={{ marginBottom: 2 }}>
+            <TextField
+              label={`Главный модуль ${mainIndex + 1}`}
+              variant="outlined"
+              fullWidth
+              value={mainModule.title}
+              onChange={e => handleMainModuleChange(mainIndex, 'title', e.target.value)}
+              sx={{ marginBottom: 2, marginTop: 2 }}
+            />
+            {mainModule.submodules.map((submodule, subIndex) => (
+              <Box key={subIndex} sx={{ marginBottom: 2 }}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <Select
+                      value={submodule.type}
+                      onChange={e =>
+                        handleSubmoduleChange(mainIndex, subIndex, 'type', e.target.value)
+                      }
+                      displayEmpty
+                      fullWidth
+                    >
+                      <MenuItem value="" disabled>
+                        Выберите тип модуля
+                      </MenuItem>
+                      <MenuItem value="lecture">Лекция</MenuItem>
+                      <MenuItem value="practice">Практика</MenuItem>
+                      <MenuItem value="test">Тест</MenuItem>
+                      <MenuItem value="simulation">Симуляция</MenuItem>
+                    </Select>
+                  </Grid>
+                  {submodule.type === 'lecture' && (
+                    <Grid item xs={12} sx={{ marginTop: 2 }}>
+                      <Box
+                        sx={{
+                          '.w-md-editor': {
+                            backgroundColor: '#fff',
+                            color: '#000',
+                          },
+                          '.w-md-editor-text': {
+                            backgroundColor: '#fff',
+                            color: '#000',
+                          },
+                        }}
+                      >
+                        <MDEditor
+                          value={submodule.content}
+                          onChange={value =>
+                            handleSubmoduleChange(
+                              mainIndex,
+                              subIndex,
+                              'content',
+                              value || ''
+                            )
+                          }
+                          height={400}
+                        />
+                      </Box>
+                    </Grid>
+                  )}
+                  {submodule.type === 'test' && (
+                    <Grid item xs={12} sx={{ marginTop: 2 }}>
+                      <TestEditor
+                        value={submodule.content}
+                        onChange={value =>
+                          handleSubmoduleChange(mainIndex, subIndex, 'content', value)
+                        }
+                      />
+                    </Grid>
+                  )}
+                  {submodule.type !== 'lecture' && submodule.type !== 'test' && (
+                    <Grid item xs={12} sx={{ marginTop: 2 }}>
+                      <TextField
+                        value={submodule.content}
+                        onChange={e =>
+                          handleSubmoduleChange(
+                            mainIndex,
+                            subIndex,
+                            'content',
+                            e.target.value
+                          )
+                        }
+                        placeholder="Содержание модуля"
+                        variant="outlined"
+                        fullWidth
+                      />
+                    </Grid>
+                  )}
                 </Grid>
-              )}
-              {module.type !== 'lecture' && (
-                <Grid item xs={12} sx={{ marginTop: 2 }}>
-                  <TextField
-                    value={module.content}
-                    onChange={e => handleModuleChange(index, 'content', e.target.value)}
-                    placeholder="Содержание модуля"
-                    variant="outlined"
-                    fullWidth
-                    sx={{ input: { color: '#ffffff' }, label: { color: '#ffffff' } }}
-                  />
-                </Grid>
-              )}
-            </Grid>
+              </Box>
+            ))}
+            <Button
+              variant="contained"
+              onClick={() => addSubmodule(mainIndex)}
+              fullWidth
+              sx={{ marginBottom: 2, backgroundColor: '#1DA57A' }}
+            >
+              Добавить подмодуль
+            </Button>
           </Box>
         ))}
         <Button
           variant="contained"
-          onClick={addModule}
+          onClick={addMainModule}
           fullWidth
-          sx={{ marginBottom: 2, backgroundColor: '#1DA57A' }}
+          sx={{ marginBottom: 2, marginTop: 2, backgroundColor: '#1DA57A' }}
         >
-          Добавить модуль
+          Добавить главный модуль
         </Button>
         <Button
           variant="contained"
