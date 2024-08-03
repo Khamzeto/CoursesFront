@@ -6,7 +6,6 @@ import {
   Link,
   useLocation,
   Navigate,
-  useNavigate,
 } from 'react-router-dom';
 import {
   AppBar,
@@ -15,25 +14,23 @@ import {
   Drawer,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
   CssBaseline,
   Container,
   Box,
   Typography,
-  Button,
   ThemeProvider,
 } from '@mui/material';
 import {
-  Dashboard as DashboardIcon,
-  Person as UserIcon,
-  Edit as EditIcon,
-  Book as ReadIcon,
-  Menu as MenuIcon,
-  AccountCircle as ProfileIcon,
-  Settings as SettingsIcon,
-  ExitToApp as ExitToAppIcon,
-} from '@mui/icons-material';
+  DashboardOutlined,
+  UserOutlined,
+  EditOutlined,
+  BookOutlined,
+  MenuOutlined,
+  ProfileOutlined,
+  SettingOutlined,
+  MessageOutlined,
+} from '@ant-design/icons';
 
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -44,7 +41,11 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Courses from './pages/Courses';
 import CourseModulesEditor from './components/CourseModulesEditor/CourseModulesEditor';
+import ChatPage from './pages/ChatPage';
+
 import lightTheme from './utils/theme';
+import Course from './pages/Course';
+import './App.css'; // Импорт глобальных стилей
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -58,7 +59,6 @@ const PublicRoute: React.FC<{ children: React.ReactElement }> = ({ children }) =
 
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const navigate = useNavigate();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -78,71 +78,67 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
-
   const drawer = (
     <Box sx={{ width: 250 }}>
       <List>
-        <ListItem button component={Link} to="/" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <DashboardIcon />
-          </ListItemIcon>
-          <ListItemText primary="Панель управления" />
-        </ListItem>
         <ListItem button component={Link} to="/profile" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <ProfileIcon />
-          </ListItemIcon>
+          <ProfileOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Профиль" />
         </ListItem>
+        <ListItem button component={Link} to="/" onClick={toggleDrawer}>
+          <DashboardOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+          <ListItemText primary="Панель управления" />
+        </ListItem>
         <ListItem button component={Link} to="/users" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <UserIcon />
-          </ListItemIcon>
+          <UserOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Управление пользователями" />
         </ListItem>
         <ListItem button component={Link} to="/course-editor" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <EditIcon />
-          </ListItemIcon>
+          <EditOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Редактор курсов" />
         </ListItem>
         <ListItem button component={Link} to="/user-progress" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <ReadIcon />
-          </ListItemIcon>
+          <BookOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Прогресс пользователей" />
         </ListItem>
         <ListItem button component={Link} to="/settings" onClick={toggleDrawer}>
-          <ListItemIcon>
-            <SettingsIcon />
-          </ListItemIcon>
+          <SettingOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Настройки" />
         </ListItem>
-        <ListItem button onClick={handleLogout}>
-          <ListItemIcon>
-            <ExitToAppIcon />
-          </ListItemIcon>
-          <ListItemText primary="Выйти" />
+        <ListItem button component={Link} to="/chat" onClick={toggleDrawer}>
+          <MessageOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+          <ListItemText primary="Чат" />
         </ListItem>
       </List>
     </Box>
   );
 
   const hideAppBarAndDrawer =
-    location.pathname === '/login' || location.pathname === '/register';
+    location.pathname === '/login' ||
+    location.pathname === '/register' ||
+    location.pathname === '/course';
 
   return (
-    <Box sx={{ display: 'flex' }}>
+    <Box sx={{ display: 'flex', padding: '0 !important' }}>
       <CssBaseline />
       {!hideAppBarAndDrawer && (
         <>
-          <AppBar position="fixed" sx={{ zIndex: theme => theme.zIndex.drawer + 1 }}>
-            <Toolbar>
+          <AppBar
+            position="fixed"
+            sx={{
+              zIndex: theme => theme.zIndex.drawer + 1,
+              background: 'linear-gradient(90deg, #6AEB60, #34A853)',
+            }}
+          >
+            <Toolbar
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                backgroundColor: '#1E1E1E',
+                padding: { xs: '0 8px', sm: '0 16px' },
+              }}
+            >
               {isMobile && (
                 <IconButton
                   color="inherit"
@@ -150,12 +146,29 @@ const AppContent: React.FC = () => {
                   onClick={toggleDrawer}
                   sx={{ mr: 2 }}
                 >
-                  <MenuIcon />
+                  <MenuOutlined />
                 </IconButton>
               )}
-              <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-                Платформа курсов по беспилотным системам
-              </Typography>
+              <Box
+                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <Typography
+                  variant="h6"
+                  noWrap
+                  component="div"
+                  sx={{
+                    fontWeight: 'bold',
+                    color: '#FFFFFF',
+                    fontSize: '18px !important',
+                    letterSpacing: '2px !important',
+                    display: 'flex !important',
+                    justifyContent: 'center !important',
+                    textAlign: 'center',
+                  }}
+                >
+                  LEM
+                </Typography>
+              </Box>
             </Toolbar>
           </AppBar>
           {isMobile ? (
@@ -167,7 +180,8 @@ const AppContent: React.FC = () => {
                 '& .MuiDrawer-paper': {
                   boxSizing: 'border-box',
                   width: 250,
-                  background: '#ffffff',
+                  background: '#1E1E1E',
+                  color: 'white',
                 },
               }}
             >
@@ -182,7 +196,8 @@ const AppContent: React.FC = () => {
                 '& .MuiDrawer-paper': {
                   width: 250,
                   boxSizing: 'border-box',
-                  background: '#ffffff',
+                  background: '#1E1E1E',
+                  color: 'white',
                 },
               }}
             >
@@ -194,11 +209,21 @@ const AppContent: React.FC = () => {
       )}
       <Box
         component="main"
-        sx={{ flexGrow: 1, p: 3, background: '#EDEDED', minHeight: '100vh' }} // Серый фон в стиле ВКонтакте
+        sx={{
+          flexGrow: 1,
+          background: '#EDEDED',
+          minHeight: '100vh',
+          padding: '0 !important',
+        }}
       >
         <Toolbar />
-        <Container>
+        <Container
+          sx={{
+            padding: '0 !important',
+          }}
+        >
           <Routes>
+            <Route path="/course" element={<Course />} />
             <Route
               path="/login"
               element={
@@ -268,6 +293,14 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <CourseModulesEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat"
+              element={
+                <ProtectedRoute>
+                  <ChatPage />
                 </ProtectedRoute>
               }
             />

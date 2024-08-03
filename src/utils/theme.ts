@@ -1,22 +1,22 @@
 import { createTheme } from '@mui/material/styles';
 
-const lightTheme = createTheme({
+const darkTheme = createTheme({
   palette: {
-    mode: 'light',
+    mode: 'dark',
     primary: {
-      main: '#1DA57A', // Основной цвет
+      main: '#333333', // Основной темный цвет
     },
     background: {
-      default: '#EDEDED', // Светло-серый фон
-      paper: '#FFFFFF',
+      default: '#121212 !important', // Темный фон
+      paper: '#1E1E1E', // Темный цвет для Paper
     },
     text: {
-      primary: '#000', // Основной текст черный
-      secondary: '#666666', // Вторичный текст серый
+      primary: '#FFFFFF', // Основной текст белый
+      secondary: '#B0BEC5', // Вторичный текст светло-серый
     },
-    divider: '#CCCCCC',
+    divider: '#424242',
     action: {
-      hover: '#E0E0E0', // Цвет при наведении на выбранные элементы
+      hover: '#333333', // Цвет при наведении на выбранные элементы
     },
   },
   typography: {
@@ -26,7 +26,7 @@ const lightTheme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          backgroundColor: '#1DA57A', // Зеленый цвет для хедера
+          backgroundColor: '#1E1E1E', // Темный цвет для хедера
           boxShadow: 'none',
           color: '#FFFFFF', // Белый цвет текста на AppBar
         },
@@ -35,9 +35,9 @@ const lightTheme = createTheme({
     MuiDrawer: {
       styleOverrides: {
         paper: {
-          backgroundColor: '#FFFFFF',
+          backgroundColor: '#1E1E1E',
           boxShadow: 'none',
-          color: '#000000', // Цвет текста в Drawer
+          color: '#FFFFFF', // Цвет текста в Drawer
         },
       },
     },
@@ -45,22 +45,22 @@ const lightTheme = createTheme({
       styleOverrides: {
         root: {
           '&.Mui-selected': {
-            backgroundColor: '#E0E0E0',
+            backgroundColor: '#333333',
           },
           '&.Mui-selected:hover': {
-            backgroundColor: '#1DA57A',
+            backgroundColor: '#444444',
           },
-          color: '#000000', // Цвет текста в ListItem
+          color: '#FFFFFF', // Цвет текста в ListItem
         },
       },
     },
     MuiTableCell: {
       styleOverrides: {
         head: {
-          color: '#000000', // Цвет текста в заголовках таблицы
+          color: '#FFFFFF', // Цвет текста в заголовках таблицы
         },
         body: {
-          color: '#000000', // Цвет текста в теле таблицы
+          color: '#FFFFFF', // Цвет текста в теле таблицы
         },
       },
     },
@@ -68,11 +68,42 @@ const lightTheme = createTheme({
       styleOverrides: {
         root: {
           boxShadow: 'none',
-          color: '#000000', // Цвет текста в Paper
+          backgroundColor: '#1E1E1E !important',
+          color: '#FFFFFF', // Цвет текста в Paper
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#2BA9EF', // Основной темный цвет для кнопок
+          color: '#FFFFFF', // Белый цвет текста на кнопках
+          textTransform: 'none', // Убрать uppercase
+          boxShadow: 'none',
+          '&:hover': {
+            backgroundColor: '#444444', // Цвет при наведении на кнопки
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: '#FFFFFF', // Белый цвет иконок
+          '&:hover': {
+            color: '#B0BEC5', // Светло-серый цвет при наведении на иконки
+          },
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: '#FFFFFF', // Белый цвет текста
         },
       },
     },
   },
 });
 
-export default lightTheme;
+export default darkTheme;

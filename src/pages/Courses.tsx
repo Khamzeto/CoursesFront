@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -9,32 +9,28 @@ import {
   Grid,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-
-const courses = [
-  {
-    id: 1,
-    title: 'Основы БАС',
-    description: 'Курс о базовых принципах и технологиях беспилотных авиационных систем.',
-    image: 'https://via.placeholder.com/150/0000FF/808080?text=Course+1',
-  },
-  {
-    id: 2,
-    title: 'Продвинутые технологии БАС',
-    description: 'Углубленный курс по современным технологиям в области БАС.',
-    image: 'https://via.placeholder.com/150/FF0000/FFFFFF?text=Course+2',
-  },
-  {
-    id: 3,
-    title: 'Программирование БАС',
-    description:
-      'Курс по программированию и управлению беспилотными авиационными системами.',
-    image: 'https://via.placeholder.com/150/00FF00/000000?text=Course+3',
-  },
-  // Добавьте больше курсов здесь
-];
+import $api from '../api/axiosInstance'; // Импортируйте ваш настроенный экземпляр axios
 
 const Courses: React.FC = () => {
   const navigate = useNavigate();
+  const [courses, setCourses] = useState<any[]>([]);
+  const [ownerId, setOwnerId] = useState<number | null>(1); // Установите `ownerId` как вам нужно
+
+  useEffect(() => {
+    const fetchCourses = async () => {
+      try {
+        const params: any = {};
+        console.log(localStorage.getItem('user'));
+        if (ownerId) params.ownerId = 1;
+        const response = await $api.get('/api/v1/courses', { params });
+        setCourses(response.data);
+      } catch (error) {
+        console.error('Error fetching courses:', error);
+      }
+    };
+
+    fetchCourses();
+  }, [ownerId]);
 
   const handleCreateCourse = () => {
     navigate('/create-course');
@@ -42,6 +38,16 @@ const Courses: React.FC = () => {
 
   const handleEditModules = (courseId: number) => {
     navigate(`/edit-course/${courseId}`);
+  };
+
+  const handleDeleteCourse = async (courseId: number) => {
+    try {
+      await $api.delete(`/api/v1/courses/${courseId}`);
+      setCourses(courses.filter(course => course.id !== courseId));
+      console.log('Course deleted successfully');
+    } catch (error) {
+      console.error('Error deleting course:', error);
+    }
   };
 
   return (
@@ -56,7 +62,7 @@ const Courses: React.FC = () => {
               <CardMedia
                 component="img"
                 height="140"
-                image={course.image}
+                image={`http://${course.previewUrl}` || 'https://via.placeholder.com/150'}
                 alt={course.title}
               />
               <CardContent>
@@ -70,13 +76,25 @@ const Courses: React.FC = () => {
                 >
                   {course.description}
                 </Typography>
-                <Box display="flex" justifyContent="center" width="100%">
+                <Box
+                  display="flex"
+                  flexDirection="column"
+                  justifyContent="center"
+                  width="100%"
+                >
                   <Button
                     variant="contained"
-                    fullWidth
                     onClick={() => handleEditModules(course.id)}
+                    sx={{ marginBottom: 1 }}
                   >
                     Редактировать
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => handleDeleteCourse(course.id)}
+                  >
+                    Удалить
                   </Button>
                 </Box>
               </CardContent>

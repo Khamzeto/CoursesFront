@@ -24,7 +24,7 @@ const Login: React.FC = () => {
         console.log('Token saved in localStorage:', localStorage.getItem('token'));
 
         // Fetch user information
-        const userResponse = await $api.get('/api/v1/profile');
+        const userResponse = await $api.get('/api/v1/user');
         console.log('User information:', userResponse.data);
 
         // Сохранение данных пользователя

@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { Box, TextField, Button, Typography, Paper, Grid } from '@mui/material';
 import axios from 'axios';
 import $api, { API_URL } from '../../api/axiosInstance'; // Убедитесь, что путь к файлу верен
+import { useNavigate } from 'react-router-dom';
 
 const CourseEditor: React.FC = () => {
+  const navigate = useNavigate();
   const [image, setImage] = useState<File | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -30,6 +32,7 @@ const CourseEditor: React.FC = () => {
         },
       });
       console.log('Course saved successfully:', response.data);
+      navigate('/course-editor');
     } catch (error) {
       console.error('Error saving course:', error);
     }
