@@ -28,7 +28,8 @@ const Login: React.FC = () => {
         // Сохранение данных пользователя
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
-        navigate('/');
+        navigate('/profile');
+        window.location.reload();
       }
     } catch (error) {
       console.error('Login failed:', error);

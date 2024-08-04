@@ -124,20 +124,21 @@ const AppContent: React.FC = () => {
             </ListItem>
           </>
         )}
-        <ListItem button component={Link} to="/settings" onClick={toggleDrawer}>
-          <SettingOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Настройки" />
-        </ListItem>
-        <ListItem button component={Link} to="/chat" onClick={toggleDrawer}>
-          <MessageOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Чат" />
-        </ListItem>
         {userRole == 'STUDENT' && (
           <ListItem button component={Link} to="/courses" onClick={toggleDrawer}>
             <EditOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
             <ListItemText primary="Курсы" />
           </ListItem>
         )}
+        <ListItem button component={Link} to="/chat" onClick={toggleDrawer}>
+          <MessageOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+          <ListItemText primary="Чат" />
+        </ListItem>
+
+        <ListItem button component={Link} to="/settings" onClick={toggleDrawer}>
+          <SettingOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+          <ListItemText primary="Настройки" />
+        </ListItem>
         <ListItem button onClick={handleLogout}>
           <LogoutOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Выйти" />
@@ -301,14 +302,7 @@ const AppContent: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/settings"
-              element={
-                <ProtectedRoute>
-                  <Settings />
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/edit-course/:courseId"
               element={
@@ -326,10 +320,26 @@ const AppContent: React.FC = () => {
               }
             />
             <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/chat"
               element={
                 <ProtectedRoute>
                   <ChatPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

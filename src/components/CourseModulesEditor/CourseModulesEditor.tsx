@@ -27,6 +27,7 @@ const CourseModulesEditor: React.FC = () => {
   const [complexity, setComplexity] = useState('');
   const [ownerId, setOwnerId] = useState<number | null>(null);
   const navigate = useNavigate();
+
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
@@ -42,10 +43,15 @@ const CourseModulesEditor: React.FC = () => {
         setMainModules(
           course.chapters.map((chapter: any) => ({
             title: chapter.title,
-            submodules: chapter.lessons.map((lesson: any) => ({
-              type: lesson.lectures.length > 0 ? 'lecture' : 'test',
+            submodules: (chapter.lessons || []).map((lesson: any) => ({
+              type: lesson.lectures && lesson.lectures.length > 0 ? 'lecture' : 'test',
               content:
-                lesson.lectures.length > 0 ? lesson.lectures[0].content : lesson.tests,
+                lesson.lectures && lesson.lectures.length > 0
+                  ? lesson.lectures[0].content
+                  : (lesson.tests || []).map((test: any) => ({
+                      question: test.question || '',
+                      options: test.options || [{ text: '', isCorrect: false }],
+                    })),
             })),
           }))
         );
@@ -297,7 +303,7 @@ const CourseModulesEditor: React.FC = () => {
                   {submodule.type === 'test' && (
                     <Grid item xs={12} sx={{ marginTop: 2 }}>
                       <TestEditor
-                        value={submodule.content}
+                        value={submodule.content || []} // Ensure content is an array
                         onChange={value =>
                           handleSubmoduleChange(mainIndex, subIndex, 'content', value)
                         }

@@ -98,35 +98,6 @@ const Register: React.FC = () => {
               value={formValues.email}
               onChange={handleInputChange}
             />
-            <TextField
-              name="lastName"
-              label="Фамилия"
-              variant="outlined"
-              fullWidth
-              required
-              value={formValues.lastName}
-              onChange={handleInputChange}
-              sx={{ marginBottom: 2 }}
-            />
-            <TextField
-              name="firstName"
-              label="Имя"
-              variant="outlined"
-              fullWidth
-              required
-              value={formValues.firstName}
-              onChange={handleInputChange}
-              sx={{ marginBottom: 2 }}
-            />
-            <TextField
-              name="middleName"
-              label="Отчество"
-              variant="outlined"
-              fullWidth
-              value={formValues.middleName}
-              onChange={handleInputChange}
-              sx={{ marginBottom: 2 }}
-            />
 
             <FormControl fullWidth sx={{ marginBottom: 2 }}>
               <InputLabel id="role-label">Роль</InputLabel>

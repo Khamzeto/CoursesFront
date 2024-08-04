@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>3D Model Viewer</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/donmccurdy/aframe-extras/dist/aframe-extras.controls.min.js"></script>
+    <script src="https://hammerjs.github.io/dist/hammer.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        overflow: hidden;
+      }
+      #overlay {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        color: white;
+        background: rgba(0, 0, 0, 0.5);
+        padding: 5px 10px;
+        border-radius: 5px;
+      }
+      .controls {
+        position: fixed;
+        bottom: 14%;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+
+        align-items: center;
+        gap: 10px;
+        z-index: 10;
+      }
+      .controls button {
+        width: 50px;
+        display: flex;
+        justify-content: center;
+        height: 50px;
+        align-items: center;
+        background-color: rgba(255, 255, 255, 0.7);
+        border: none;
+        border-radius: 5px;
+        font-size: 20px;
+        cursor: pointer;
+      }
+      .controls.vr-mode {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="overlay">3D Model Viewer</div>
+    <div class="controls" id="control-buttons">
+      <button id="rotate-up">↑</button>
+      <div style="display: flex; gap: 10px">
+        <button id="rotate-left">⟲</button>
+        <button id="rotate-right">⟳</button>
+      </div>
+      <button id="rotate-down">↓</button>
+      <div style="display: flex; gap: 10px">
+        <button id="zoom-in">+</button>
+        <button id="zoom-out">-</button>
+      </div>
+    </div>
+    <a-scene vr-mode-ui="enabled: true">
+      <a-assets>
+        <a-asset-item id="droneModel" src="/models/drone_1.glb"></a-asset-item>
+      </a-assets>
+      <a-sky color="#ECECEC"></a-sky>
+      <a-light type="ambient" color="#445451"></a-light>
+      <a-light type="point" intensity="2" position="2 4 4"></a-light>
+      <a-entity
+        id="drone"
+        gltf-model="#droneModel"
+        scale="0.5 0.5 0.5"
+        position="0 1 -5"
+        rotation="0 45 0"
+        draggable
+        touch-rotate
+        pinch-scale
+      ></a-entity>
+      <a-entity camera look-controls="touchEnabled: true" position="0 1.6 0"></a-entity>
+    </a-scene>
+    <script>
+      // Prevent default double-tap zoom behavior
+      document.addEventListener('dblclick', function (event) {
+        event.preventDefault();
+      });
+
+      document.addEventListener(
+        'touchstart',
+        function (event) {
+          if (event.touches.length > 1) {
+            event.preventDefault();
+          }
+        },
+        { passive: false }
+      );
+
+      // Handle VR mode to hide control buttons
+      const controlButtons = document.getElementById('control-buttons');
+      document.querySelector('a-scene').addEventListener('enter-vr', function () {
+        controlButtons.classList.add('vr-mode');
+      });
+      document.querySelector('a-scene').addEventListener('exit-vr', function () {
+        controlButtons.classList.remove('vr-mode');
+      });
+
+      // Компонент для перетаскивания и вращения модели
+      AFRAME.registerComponent('draggable', {
+        init: function () {
+          const el = this.el;
+          let isDragging = false;
+          let previousMousePosition = { x: 0, y: 0 };
+          el.sceneEl.addEventListener('mousedown', function (evt) {
+            isDragging = true;
+            previousMousePosition = { x: evt.clientX, y: evt.clientY };
+          });
+          el.sceneEl.addEventListener('mousemove', function (evt) {
+            if (!isDragging) return;
+            const deltaX = evt.clientX - previousMousePosition.x;
+            const deltaY = evt.clientY - previousMousePosition.y;
+            const rotation = el.getAttribute('rotation');
+            el.setAttribute('rotation', {
+              x: rotation.x - deltaY * 0.5,
+              y: rotation.y - deltaX * 0.5,
+              z: rotation.z,
+            });
+            previousMousePosition = { x: evt.clientX, y: evt.clientY };
+          });
+          el.sceneEl.addEventListener('mouseup', function () {
+            isDragging = false;
+          });
+          el.sceneEl.addEventListener('wheel', function (evt) {
+            evt.preventDefault();
+            const scale = el.getAttribute('scale');
+            const factor = evt.deltaY < 0 ? 1.1 : 0.9;
+            el.setAttribute('scale', {
+              x: scale.x * factor,
+              y: scale.y * factor,
+              z: scale.z * factor,
+            });
+          });
+        },
+      });
+
+      // Компонент для масштабирования через pinch жесты
+      AFRAME.registerComponent('pinch-scale', {
+        init: function () {
+          const el = this.el;
+          const hammer = new Hammer(el.sceneEl);
+          hammer.get('pinch').set({ enable: true });
+
+          hammer.on('pinch', function (evt) {
+            const scale = el.getAttribute('scale');
+            const factor = evt.scale > 1 ? 1.1 : 0.9;
+            el.setAttribute('scale', {
+              x: scale.x * factor,
+              y: scale.y * factor,
+              z: scale.z * factor,
+            });
+          });
+        },
+      });
+
+      // Компонент для вращения модели через touch жесты
+      AFRAME.registerComponent('touch-rotate', {
+        schema: { speed: { default: 1 } },
+        init: function () {
+          const el = this.el;
+          let isDragging = false;
+          let previousTouchPosition = { x: 0, y: 0 };
+          el.sceneEl.addEventListener('touchstart', function (evt) {
+            if (evt.touches.length === 1) {
+              isDragging = true;
+              previousTouchPosition = {
+                x: evt.touches[0].clientX,
+                y: evt.touches[0].clientY,
+              };
+            }
+          });
+          el.sceneEl.addEventListener('touchmove', function (evt) {
+            if (!isDragging || evt.touches.length !== 1) return;
+            const deltaX = evt.touches[0].clientX - previousTouchPosition.x;
+            const deltaY = evt.touches[0].clientY - previousTouchPosition.y;
+            const rotation = el.getAttribute('rotation');
+            el.setAttribute('rotation', {
+              x: rotation.x - deltaY * 0.5,
+              y: rotation.y - deltaX * 0.5,
+              z: rotation.z,
+            });
+            previousTouchPosition = {
+              x: evt.touches[0].clientX,
+              y: evt.touches[0].clientY,
+            };
+          });
+          el.sceneEl.addEventListener('touchend', function () {
+            isDragging = false;
+          });
+        },
+      });
+
+      // Добавление управления кнопками
+      document.getElementById('rotate-left').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const rotation = drone.getAttribute('rotation');
+        drone.setAttribute('rotation', {
+          x: rotation.x,
+          y: rotation.y + 10,
+          z: rotation.z,
+        });
+      });
+
+      document.getElementById('rotate-right').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const rotation = drone.getAttribute('rotation');
+        drone.setAttribute('rotation', {
+          x: rotation.x,
+          y: rotation.y - 10,
+          z: rotation.z,
+        });
+      });
+
+      document.getElementById('rotate-up').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const rotation = drone.getAttribute('rotation');
+        drone.setAttribute('rotation', {
+          x: rotation.x - 10,
+          y: rotation.y,
+          z: rotation.z,
+        });
+      });
+
+      document.getElementById('rotate-down').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const rotation = drone.getAttribute('rotation');
+        drone.setAttribute('rotation', {
+          x: rotation.x + 10,
+          y: rotation.y,
+          z: rotation.z,
+        });
+      });
+
+      document.getElementById('zoom-in').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const scale = drone.getAttribute('scale');
+        drone.setAttribute('scale', {
+          x: scale.x * 1.1,
+          y: scale.y * 1.1,
+          z: scale.z * 1.1,
+        });
+      });
+
+      document.getElementById('zoom-out').addEventListener('click', function () {
+        const drone = document.querySelector('#drone');
+        const scale = drone.getAttribute('scale');
+        drone.setAttribute('scale', {
+          x: scale.x * 0.9,
+          y: scale.y * 0.9,
+          z: scale.z * 0.9,
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   TextField,
@@ -14,28 +14,113 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
+import setupSocket from '../../utils/socket'; // Adjust the import path as necessary
 
-const messages = [
+interface Message {
+  id: number;
+  text: string;
+  user: 'me' | 'other';
+}
+
+const initialMessages: Message[] = [
   { id: 1, text: 'Привет!', user: 'other' },
   { id: 2, text: 'Как дела?', user: 'other' },
   { id: 3, text: 'Отлично, спасибо!', user: 'me' },
 ];
+const generateUsername = () => {
+  const adjectives = [
+    'Quick',
+    'Happy',
+    'Bright',
+    'Dark',
+    'Blue',
+    'Red',
+    'Green',
+    'Yellow',
+    'Purple',
+    'Fast',
+  ];
+  const nouns = [
+    'Lion',
+    'Tiger',
+    'Bear',
+    'Wolf',
+    'Eagle',
+    'Shark',
+    'Panther',
+    'Leopard',
+    'Hawk',
+    'Falcon',
+  ];
+  return `${adjectives[Math.floor(Math.random() * adjectives.length)]}${
+    nouns[Math.floor(Math.random() * nouns.length)]
+  }${Math.floor(Math.random() * 1000)}`;
+};
 
 const ChatUI = () => {
+  const [username] = useState(generateUsername());
   const [message, setMessage] = useState('');
-  const [messageList, setMessageList] = useState(messages);
+  const [messageList, setMessageList] = useState<Message[]>(initialMessages);
+  const [user, setUser] = useState<'me' | 'other'>('me'); // Set a default user
+  const socketRef = useRef<ReturnType<typeof setupSocket>>();
 
-  const handleSendMessage = () => {
-    if (message.trim()) {
-      setMessageList([...messageList, { id: Date.now(), text: message, user: 'me' }]);
+  const setupSocketConnection = useCallback(() => {
+    try {
+      const socket = setupSocket();
+      socketRef.current = socket;
+
+      socket.on('connect', () => {
+        console.log('Connected to WebSocket');
+      });
+
+      socket.on('private_message', (data: { content: string; sender: string }) => {
+        console.log('Received private message:', data);
+        setMessageList(prev => [
+          ...prev,
+          { id: Date.now(), text: data.content, user: 'other' },
+        ]);
+      });
+
+      socket.on('disconnect', () => {
+        console.log('Disconnected from WebSocket');
+      });
+
+      socket.on('connect_error', (error: any) => {
+        console.error('WebSocket Connection Error:', error);
+      });
+
+      socket.on('error', (error: any) => {
+        console.error('WebSocket Error:', error);
+      });
+    } catch (error) {
+      console.error('Socket setup error:', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    setupSocketConnection();
+    return () => {
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+      }
+    };
+  }, [setupSocketConnection]);
+
+  const handleSendMessage = useCallback(() => {
+    if (message.trim() && socketRef.current) {
+      const newMessage = { recipient: username, content: message };
+      console.log('Sending message:', newMessage);
+      socketRef.current.emit('private_message', newMessage);
+      setMessageList([...messageList, { id: Date.now(), text: message, user }]);
       setMessage('');
     }
-  };
+  }, [message, messageList, user, username]);
 
   return (
     <Container
       sx={{
         padding: '0 !important',
+        paddingLeft: '18px !important',
         maxHeight: '100vh',
         minWidth: '100%',
         display: 'flex',
