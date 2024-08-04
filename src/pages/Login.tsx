@@ -23,12 +23,10 @@ const Login: React.FC = () => {
         console.log('Login successful:', response.data);
         console.log('Token saved in localStorage:', localStorage.getItem('token'));
 
-        // Fetch user information
-        const userResponse = await $api.get('/api/v1/user');
-        console.log('User information:', userResponse.data);
+        console.log('User information:', response.data.user);
 
         // Сохранение данных пользователя
-        localStorage.setItem('user', JSON.stringify(userResponse.data));
+        localStorage.setItem('user', JSON.stringify(response.data.user));
 
         navigate('/');
       }

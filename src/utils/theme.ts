@@ -76,7 +76,7 @@ const darkTheme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          backgroundColor: '#2BA9EF', // Основной темный цвет для кнопок
+          backgroundColor: '#2BA9EF !important', // Основной темный цвет для кнопок
           color: '#FFFFFF', // Белый цвет текста на кнопках
           textTransform: 'none', // Убрать uppercase
           boxShadow: 'none',

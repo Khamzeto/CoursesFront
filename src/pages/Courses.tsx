@@ -14,23 +14,29 @@ import $api from '../api/axiosInstance'; // Импортируйте ваш на
 const Courses: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
-  const [ownerId, setOwnerId] = useState<number | null>(1); // Установите `ownerId` как вам нужно
 
   useEffect(() => {
     const fetchCourses = async () => {
       try {
-        const params: any = {};
-        console.log(localStorage.getItem('user'));
-        if (ownerId) params.ownerId = 1;
-        const response = await $api.get('/api/v1/courses', { params });
-        setCourses(response.data);
+        const userProfileData = localStorage.getItem('user');
+        if (userProfileData) {
+          const userProfile = JSON.parse(userProfileData);
+          const id_user = userProfile.id;
+          const response = await $api.get(`/api/v1/course`);
+          if (Array.isArray(response.data)) {
+            setCourses(response.data);
+            console.log('Courses loaded:', response.data);
+          } else {
+            console.error('Unexpected response data:', response.data);
+          }
+        }
       } catch (error) {
         console.error('Error fetching courses:', error);
       }
     };
 
     fetchCourses();
-  }, [ownerId]);
+  }, []);
 
   const handleCreateCourse = () => {
     navigate('/create-course');
@@ -42,7 +48,7 @@ const Courses: React.FC = () => {
 
   const handleDeleteCourse = async (courseId: number) => {
     try {
-      await $api.delete(`/api/v1/courses/${courseId}`);
+      await $api.delete(`/api/v1/course`);
       setCourses(courses.filter(course => course.id !== courseId));
       console.log('Course deleted successfully');
     } catch (error) {
@@ -56,51 +62,62 @@ const Courses: React.FC = () => {
         Создать курс
       </Button>
       <Grid container spacing={3}>
-        {courses.map(course => (
-          <Grid item xs={12} sm={6} md={4} key={course.id}>
-            <Card>
-              <CardMedia
-                component="img"
-                height="140"
-                image={`http://${course.previewUrl}` || 'https://via.placeholder.com/150'}
-                alt={course.title}
-              />
-              <CardContent>
-                <Typography gutterBottom variant="h5" component="div">
-                  {course.title}
-                </Typography>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{ marginTop: 2, marginBottom: 2 }} // Добавление margin
-                >
-                  {course.description}
-                </Typography>
-                <Box
-                  display="flex"
-                  flexDirection="column"
-                  justifyContent="center"
-                  width="100%"
-                >
-                  <Button
-                    variant="contained"
-                    onClick={() => handleEditModules(course.id)}
-                    sx={{ marginBottom: 1 }}
+        {Array.isArray(courses) && courses.length > 0 ? (
+          courses.map(course => (
+            <Grid item xs={12} sm={6} md={4} key={course.id}>
+              <Card sx={{ borderRadius: 2 }}>
+                <CardMedia
+                  component="img"
+                  height="140"
+                  image={
+                    course.preview
+                      ? `${course.preview}`
+                      : 'https://via.placeholder.com/150'
+                  }
+                  alt={course.title}
+                  sx={{ borderTopLeftRadius: 14, borderTopRightRadius: 14 }}
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {course.title}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ marginTop: 2, marginBottom: 2 }} // Добавление margin
                   >
-                    Редактировать
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleDeleteCourse(course.id)}
+                    {course.description}
+                  </Typography>
+                  <Box
+                    display="flex"
+                    flexDirection="column"
+                    justifyContent="center"
+                    width="100%"
                   >
-                    Удалить
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
+                    <Button
+                      variant="contained"
+                      onClick={() => handleEditModules(course.id)}
+                      sx={{ marginBottom: 1 }}
+                    >
+                      Редактировать
+                    </Button>
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={() => handleDeleteCourse(course.id)}
+                    >
+                      Удалить
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        ) : (
+          <Typography variant="body1" color="error">
+            Нет доступных курсов
+          </Typography>
+        )}
       </Grid>
     </Box>
   );

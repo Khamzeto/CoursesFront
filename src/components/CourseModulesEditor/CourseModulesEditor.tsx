@@ -9,27 +9,55 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
+import { useParams } from 'react-router-dom';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import TestEditor from '../TestEditor/TestEditor';
+import $api from '../../api/axiosInstance';
 
 const CourseModulesEditor: React.FC = () => {
+  const { courseId } = useParams<{ courseId: string }>(); // Получение courseId из URL
   const [mainModules, setMainModules] = useState<
     Array<{ title: string; submodules: Array<{ type: string; content: any }> }>
   >([]);
   const [image, setImage] = useState<string | ArrayBuffer | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [complexity, setComplexity] = useState('');
+  const [ownerId, setOwnerId] = useState<number | null>(null);
 
   useEffect(() => {
-    // Здесь можно загрузить данные курса, включая модули, изображение, заголовок и описание
-    // Пример:
-    // setTitle('Название курса');
-    // setDescription('Описание курса');
-    // setImage('ссылка_на_изображение');
-    // setMainModules([{ title: 'Главный модуль', submodules: [{ type: 'lecture', content: 'Содержимое лекции' }] }]);
-  }, []);
+    const fetchCourseData = async () => {
+      try {
+        const response = await $api.get(`/api/v1/course/${courseId}`);
+        const course = response.data;
+
+        // Обновление состояния компонент данными курса
+        setTitle(course.title);
+        setDescription(course.description);
+        setComplexity(course.complexity);
+        setImage(course.preview);
+        setOwnerId(course.ownerId);
+        setMainModules(
+          course.chapters.map((chapter: any) => ({
+            title: chapter.title,
+            submodules: chapter.lessons.map((lesson: any) => ({
+              type: lesson.lectures.length > 0 ? 'lecture' : 'test',
+              content:
+                lesson.lectures.length > 0 ? lesson.lectures[0].content : lesson.tests,
+            })),
+          }))
+        );
+      } catch (error) {
+        console.error('Error fetching course data:', error);
+      }
+    };
+
+    if (courseId) {
+      fetchCourseData();
+    }
+  }, [courseId]);
 
   const addMainModule = () => {
     setMainModules([...mainModules, { title: '', submodules: [] }]);
@@ -54,8 +82,19 @@ const CourseModulesEditor: React.FC = () => {
     value: any
   ) => {
     const newMainModules = [...mainModules];
+    const submodule = newMainModules[mainIndex].submodules[subIndex];
+
+    if (key === 'type' && value === 'test' && !submodule.content) {
+      submodule.content = [
+        {
+          question: '',
+          options: [{ text: '', isCorrect: false }],
+        },
+      ];
+    }
+
     newMainModules[mainIndex].submodules[subIndex] = {
-      ...newMainModules[mainIndex].submodules[subIndex],
+      ...submodule,
       [key]: value,
     };
     setMainModules(newMainModules);
@@ -72,17 +111,61 @@ const CourseModulesEditor: React.FC = () => {
     }
   };
 
-  const onFinish = (event: React.FormEvent<HTMLFormElement>) => {
+  const transformModulesToChapters = (modules: typeof mainModules) => {
+    return modules.map(module => ({
+      title: module.title,
+      lessons: module.submodules.map(submodule => {
+        if (submodule.type === 'lecture') {
+          return {
+            title: submodule.content?.split('\n')[0] || 'Untitled',
+            lectures: [{ content: submodule.content }],
+            tests: [],
+          };
+        } else if (submodule.type === 'test') {
+          return {
+            title: 'Untitled Test',
+            lectures: [],
+            tests:
+              submodule.content?.map((q: any) => ({
+                question: q.question,
+                answerId: q.options.findIndex((o: any) => o.isCorrect),
+                variants: q.options.map((o: any) => ({
+                  variant: o.text,
+                  isAnswer: o.isCorrect,
+                })),
+              })) || [],
+          };
+        } else {
+          return {
+            title: 'Untitled',
+            lectures: [],
+            tests: [],
+          };
+        }
+      }),
+    }));
+  };
+
+  const onFinish = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
+    const chapters = transformModulesToChapters(mainModules);
     const courseData = {
+      id: courseId,
       title,
       description,
-      image,
-      mainModules,
+      complexity,
+      ownerId,
+      preview: image,
+      chapters,
     };
-    console.log('Course data:', courseData);
-    // Сохранить данные курса или выполнить другие действия
+
+    try {
+      const response = await $api.post(`/api/v1/course`, courseData);
+      localStorage.removeItem('courses');
+      console.log('Course updated successfully:', response.data);
+    } catch (error) {
+      console.error('Error updating course:', error);
+    }
   };
 
   return (
@@ -133,6 +216,21 @@ const CourseModulesEditor: React.FC = () => {
               value={description}
               onChange={e => setDescription(e.target.value)}
             />
+          </Grid>
+          <Grid item xs={12}>
+            <Select
+              value={complexity}
+              onChange={e => setComplexity(e.target.value)}
+              displayEmpty
+              fullWidth
+            >
+              <MenuItem value="" disabled>
+                Выберите сложность
+              </MenuItem>
+              <MenuItem value="EASY">Легкий</MenuItem>
+              <MenuItem value="MEDIUM">Средний</MenuItem>
+              <MenuItem value="HARD">Сложный</MenuItem>
+            </Select>
           </Grid>
         </Grid>
         {mainModules.map((mainModule, mainIndex) => (

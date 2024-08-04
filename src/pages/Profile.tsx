@@ -7,33 +7,30 @@ import {
   Grid,
   TextField,
   Button,
-  Slider,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  CircularProgress,
 } from '@mui/material';
 import Cropper, { Area } from 'react-easy-crop';
 import { getCroppedImg } from '../utils/cropImage';
 import $api from '../api/axiosInstance';
 
-interface User {
-  id: number;
-  username: string;
-  password: string;
-  role: string;
-  avatarUrl: string | null;
-}
-
 interface UserProfile {
   id: number;
-  firstname: string;
-  lastname: string;
-  surname: string;
-  profession: string | null;
-  telegram: string | null;
-  userId: number;
-  user: User;
+  username: string;
+  role: string;
+  avatar: string | null;
+  firstname: string | null;
+  lastname: string | null;
+  surname: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isEnabled: boolean;
+  isAccountNonExpired: boolean;
+  isAccountNonLocked: boolean;
+  isCredentialsNonExpired: boolean;
 }
 
 const Profile: React.FC = () => {
@@ -44,9 +41,12 @@ const Profile: React.FC = () => {
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [profileUpdateSuccess, setProfileUpdateSuccess] = useState(false);
 
   useEffect(() => {
     const userProfileData = localStorage.getItem('user');
+    console.log(userProfileData);
     if (userProfileData) {
       setUserProfile(JSON.parse(userProfileData));
     }
@@ -56,32 +56,44 @@ const Profile: React.FC = () => {
     return <Typography>Loading...</Typography>;
   }
 
-  const handleUpdateProfile = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+  const handleUpdateProfile = async (updatedProfile: any) => {
+    setLoading(true);
 
     try {
-      const updatedProfile = {
-        firstname: formData.get('firstname')?.toString() || '',
-        lastname: formData.get('lastname')?.toString() || '',
-        surname: formData.get('surname')?.toString() || '',
-      };
-
-      const response = await $api.put('/api/v1/profile', updatedProfile);
+      const response = await $api.put('/api/v1/user', updatedProfile);
 
       const updatedUserProfile: UserProfile = {
-        ...userProfile!,
+        ...userProfile,
         firstname: updatedProfile.firstname,
         lastname: updatedProfile.lastname,
         surname: updatedProfile.surname,
+        avatar: updatedProfile.avatar,
       };
 
       localStorage.setItem('user', JSON.stringify(updatedUserProfile));
       setUserProfile(updatedUserProfile);
+      setProfileUpdateSuccess(true);
       console.log('Profile updated');
     } catch (error) {
       console.error('Error updating profile:', error);
+    } finally {
+      setLoading(false);
+      setTimeout(() => setProfileUpdateSuccess(false), 3000);
     }
+  };
+
+  const handleFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    const updatedProfile = {
+      firstname: formData.get('firstname')?.toString() || '',
+      lastname: formData.get('lastname')?.toString() || '',
+      surname: formData.get('surname')?.toString() || '',
+      avatar: croppedImage || userProfile.avatar,
+    };
+
+    await handleUpdateProfile(updatedProfile);
   };
 
   const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,33 +101,6 @@ const Profile: React.FC = () => {
     if (file) {
       setAvatar(file);
       setIsCropping(true);
-    }
-  };
-  const handleAvatarUpload = async (blob: Blob) => {
-    try {
-      const file = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
-      const formData = new FormData();
-      formData.append('avatar', file);
-
-      const response = await $api.post('/api/v1/users/avatar', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      const updatedUserProfile = {
-        ...userProfile,
-        user: {
-          ...userProfile!.user,
-          avatarUrl: response.data.avatarUrl, // Обновите avatarUrl в соответствии с вашим API
-        },
-      };
-
-      localStorage.setItem('user', JSON.stringify(updatedUserProfile));
-      setUserProfile(updatedUserProfile);
-      console.log('Avatar updated');
-    } catch (error) {
-      console.error('Error updating avatar:', error);
     }
   };
 
@@ -128,13 +113,19 @@ const Profile: React.FC = () => {
       setCroppedImage(croppedImage);
       setIsCropping(false);
 
-      const response = await fetch(croppedImage);
-      const blob = await response.blob();
-      handleAvatarUpload(blob);
+      const updatedProfile = {
+        firstname: userProfile.firstname,
+        lastname: userProfile.lastname,
+        surname: userProfile.surname,
+        avatar: croppedImage,
+      };
+
+      await handleUpdateProfile(updatedProfile);
     } catch (e) {
       console.error(e);
     }
   };
+
   const onCropComplete = (croppedArea: Area, croppedAreaPixels: Area) => {
     setCroppedAreaPixels(croppedAreaPixels);
   };
@@ -149,11 +140,9 @@ const Profile: React.FC = () => {
           <Avatar
             alt="Avatar"
             src={
-              userProfile.user.avatarUrl
-                ? `http://${userProfile.user.avatarUrl}`
-                : '/static/images/avatar/1.jpg'
+              userProfile.avatar ? `${userProfile.avatar}` : '/static/images/avatar/1.jpg'
             }
-            sx={{ width: 100, height: 100, marginTop: 2, marginBottom: 2 }}
+            sx={{ width: 100, height: 100, marginTop: 4, marginBottom: 2 }}
           />
           <Button variant="contained" component="label" sx={{ marginTop: 2 }}>
             Выберите файл
@@ -164,7 +153,7 @@ const Profile: React.FC = () => {
           <Box
             component="form"
             sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-            onSubmit={handleUpdateProfile}
+            onClick={handleFormSubmit}
           >
             <TextField
               name="firstname"
@@ -172,7 +161,7 @@ const Profile: React.FC = () => {
               variant="outlined"
               fullWidth
               required
-              defaultValue={userProfile.firstname}
+              defaultValue={userProfile.firstname || ''}
             />
             <TextField
               name="lastname"
@@ -180,7 +169,7 @@ const Profile: React.FC = () => {
               variant="outlined"
               fullWidth
               required
-              defaultValue={userProfile.lastname}
+              defaultValue={userProfile.lastname || ''}
             />
             <TextField
               name="surname"
@@ -188,7 +177,7 @@ const Profile: React.FC = () => {
               variant="outlined"
               fullWidth
               required
-              defaultValue={userProfile.surname}
+              defaultValue={userProfile.surname || ''}
             />
             <TextField
               name="email"
@@ -196,14 +185,18 @@ const Profile: React.FC = () => {
               variant="outlined"
               fullWidth
               required
-              defaultValue={userProfile.user.username}
+              defaultValue={userProfile.username}
               InputProps={{
                 readOnly: true,
               }}
             />
 
-            <Button variant="contained" type="submit">
-              Обновить профиль
+            <Button variant="contained" type="submit" disabled={loading}>
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Обновить профиль'
+              )}
             </Button>
           </Box>
         </Grid>

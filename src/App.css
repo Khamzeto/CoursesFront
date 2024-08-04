@@ -64,8 +64,8 @@
 .MuiIconButton-root {
   color: white !important;
 }
-
-.MuiToolbar-root {
-  display: flex !important;
-  justify-content: space-between !important;
+@media (max-width: 600px) {
+  .css-ikgn2t-MuiDrawer-docked {
+    display: none !important;
+  }
 }

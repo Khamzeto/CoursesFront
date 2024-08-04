@@ -30,6 +30,7 @@ import {
   ProfileOutlined,
   SettingOutlined,
   MessageOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 
 import Login from './pages/Login';
@@ -78,10 +79,22 @@ const AppContent: React.FC = () => {
     };
   }, []);
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+  };
+
   const drawer = (
     <Box sx={{ width: 250 }}>
       <List>
-        <ListItem button component={Link} to="/profile" onClick={toggleDrawer}>
+        <ListItem
+          button
+          style={{ fontSize: '20px', marginTop: isMobile ? '60px' : '0' }}
+          component={Link}
+          to="/profile"
+          onClick={toggleDrawer}
+        >
           <ProfileOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Профиль" />
         </ListItem>
@@ -109,6 +122,10 @@ const AppContent: React.FC = () => {
           <MessageOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Чат" />
         </ListItem>
+        <ListItem button onClick={handleLogout}>
+          <LogoutOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+          <ListItemText primary="Выйти" />
+        </ListItem>
       </List>
     </Box>
   );
@@ -116,96 +133,84 @@ const AppContent: React.FC = () => {
   const hideAppBarAndDrawer =
     location.pathname === '/login' ||
     location.pathname === '/register' ||
-    location.pathname === '/course';
+    /^\/course\/.*/.test(location.pathname);
 
   return (
     <Box sx={{ display: 'flex', padding: '0 !important' }}>
       <CssBaseline />
-      {!hideAppBarAndDrawer && (
-        <>
-          <AppBar
-            position="fixed"
+      {!hideAppBarAndDrawer && !isMobile && (
+        <AppBar
+          position="fixed"
+          sx={{
+            zIndex: theme => theme.zIndex.drawer + 1,
+            background: 'linear-gradient(90deg, #6AEB60, #34A853)',
+          }}
+        >
+          <Toolbar
             sx={{
-              zIndex: theme => theme.zIndex.drawer + 1,
-              background: 'linear-gradient(90deg, #6AEB60, #34A853)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              backgroundColor: '#1E1E1E',
+              padding: { xs: '0 8px', sm: '0 16px' },
             }}
           >
-            <Toolbar
-              sx={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#1E1E1E',
-                padding: { xs: '0 8px', sm: '0 16px' },
-              }}
-            >
-              {isMobile && (
-                <IconButton
-                  color="inherit"
-                  edge="start"
-                  onClick={toggleDrawer}
-                  sx={{ mr: 2 }}
-                >
-                  <MenuOutlined />
-                </IconButton>
-              )}
-              <Box
-                sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Typography
+                variant="h6"
+                noWrap
+                component="div"
+                sx={{
+                  fontWeight: 'bold',
+                  color: '#FFFFFF',
+                  fontSize: '18px !important',
+                  letterSpacing: '2px !important',
+                  display: 'flex !important',
+                  justifyContent: 'center !important',
+                  textAlign: 'center',
+                }}
               >
-                <Typography
-                  variant="h6"
-                  noWrap
-                  component="div"
-                  sx={{
-                    fontWeight: 'bold',
-                    color: '#FFFFFF',
-                    fontSize: '18px !important',
-                    letterSpacing: '2px !important',
-                    display: 'flex !important',
-                    justifyContent: 'center !important',
-                    textAlign: 'center',
-                  }}
-                >
-                  LEM
-                </Typography>
-              </Box>
-            </Toolbar>
-          </AppBar>
-          {isMobile ? (
-            <Drawer
-              anchor="left"
-              open={drawerOpen}
-              onClose={toggleDrawer}
-              sx={{
-                '& .MuiDrawer-paper': {
-                  boxSizing: 'border-box',
-                  width: 250,
-                  background: '#1E1E1E',
-                  color: 'white',
-                },
-              }}
-            >
-              {drawer}
-            </Drawer>
-          ) : (
-            <Drawer
-              variant="permanent"
-              sx={{
+                LEM
+              </Typography>
+            </Box>
+          </Toolbar>
+        </AppBar>
+      )}
+      {isMobile ? (
+        <Drawer
+          anchor="left"
+          open={drawerOpen}
+          onClose={toggleDrawer}
+          sx={{
+            '& .MuiDrawer-paper': {
+              boxSizing: 'border-box',
+              width: 250,
+              background: '#1E1E1E',
+              color: 'white',
+            },
+          }}
+        >
+          {drawer}
+        </Drawer>
+      ) : (
+        !hideAppBarAndDrawer && (
+          <Drawer
+            variant="permanent"
+            sx={{
+              width: 250,
+              flexShrink: 0,
+              '& .MuiDrawer-paper': {
                 width: 250,
-                flexShrink: 0,
-                '& .MuiDrawer-paper': {
-                  width: 250,
-                  boxSizing: 'border-box',
-                  background: '#1E1E1E',
-                  color: 'white',
-                },
-              }}
-            >
-              <Toolbar />
-              {drawer}
-            </Drawer>
-          )}
-        </>
+                boxSizing: 'border-box',
+                background: '#1E1E1E',
+                color: 'white',
+              },
+            }}
+          >
+            <Toolbar />
+            {drawer}
+          </Drawer>
+        )
       )}
       <Box
         component="main"
@@ -216,14 +221,14 @@ const AppContent: React.FC = () => {
           padding: '0 !important',
         }}
       >
-        <Toolbar />
+        {!hideAppBarAndDrawer && !isMobile && <Toolbar />}
         <Container
           sx={{
             padding: '0 !important',
           }}
         >
           <Routes>
-            <Route path="/course" element={<Course />} />
+            <Route path="/course/:id" element={<Course />} />
             <Route
               path="/login"
               element={
