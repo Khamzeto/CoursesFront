@@ -184,7 +184,12 @@ const Register: React.FC = () => {
               Зарегистрироваться
             </Button>
             <Box display="flex" justifyContent="center" sx={{ marginTop: 2 }}>
-              <Link component={RouterLink} to="/login" variant="body2">
+              <Link
+                component={RouterLink}
+                to="/login"
+                style={{ color: 'white' }}
+                variant="body2"
+              >
                 Есть аккаунт? Войти
               </Link>
             </Box>

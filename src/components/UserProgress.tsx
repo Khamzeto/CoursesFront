@@ -19,14 +19,14 @@ interface Progress {
   progress: number;
 }
 
-const UserProgress: React.FC = () => {
-  const [progressData, setProgressData] = useState<Progress[]>([]);
+const initialProgressData: Progress[] = [
+  { key: '1', username: 'khamzeto', course: 'БАС для чайников', progress: 50 },
+  { key: '2', username: 'rosul', course: 'БАС для чайников', progress: 75 },
+  { key: '3', username: 'rozomcool', course: 'БАС для чайников', progress: 20 },
+];
 
-  useEffect(() => {
-    axios.get('/api/progress').then(response => {
-      setProgressData(response.data);
-    });
-  }, []);
+const UserProgress: React.FC = () => {
+  const [progressData, setProgressData] = useState<Progress[]>(initialProgressData);
 
   return (
     <TableContainer component={Paper}>

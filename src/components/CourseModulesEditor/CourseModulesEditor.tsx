@@ -9,7 +9,7 @@ import {
   Typography,
   Paper,
 } from '@mui/material';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MDEditor from '@uiw/react-md-editor';
 import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
@@ -26,7 +26,7 @@ const CourseModulesEditor: React.FC = () => {
   const [description, setDescription] = useState('');
   const [complexity, setComplexity] = useState('');
   const [ownerId, setOwnerId] = useState<number | null>(null);
-
+  const navigate = useNavigate();
   useEffect(() => {
     const fetchCourseData = async () => {
       try {
@@ -163,6 +163,7 @@ const CourseModulesEditor: React.FC = () => {
       const response = await $api.post(`/api/v1/course`, courseData);
       localStorage.removeItem('courses');
       console.log('Course updated successfully:', response.data);
+      navigate('/course-editor');
     } catch (error) {
       console.error('Error updating course:', error);
     }

@@ -47,6 +47,7 @@ import ChatPage from './pages/ChatPage';
 import lightTheme from './utils/theme';
 import Course from './pages/Course';
 import './App.css'; // Импорт глобальных стилей
+import CoursesStudent from './pages/CoursesStudent';
 
 const ProtectedRoute: React.FC<{ children: React.ReactElement }> = ({ children }) => {
   const token = localStorage.getItem('token');
@@ -62,6 +63,15 @@ const AppContent: React.FC = () => {
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+
+  useEffect(() => {
+    const userProfileData = localStorage.getItem('user');
+    if (userProfileData) {
+      const userProfile = JSON.parse(userProfileData);
+      setUserRole(userProfile.role);
+    }
+  }, []);
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -98,22 +108,22 @@ const AppContent: React.FC = () => {
           <ProfileOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Профиль" />
         </ListItem>
-        <ListItem button component={Link} to="/" onClick={toggleDrawer}>
-          <DashboardOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Панель управления" />
-        </ListItem>
-        <ListItem button component={Link} to="/users" onClick={toggleDrawer}>
-          <UserOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Управление пользователями" />
-        </ListItem>
-        <ListItem button component={Link} to="/course-editor" onClick={toggleDrawer}>
-          <EditOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Редактор курсов" />
-        </ListItem>
-        <ListItem button component={Link} to="/user-progress" onClick={toggleDrawer}>
-          <BookOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
-          <ListItemText primary="Прогресс пользователей" />
-        </ListItem>
+        {userRole === 'TEACHER' && (
+          <>
+            <ListItem button component={Link} to="/users" onClick={toggleDrawer}>
+              <UserOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+              <ListItemText primary="Управление пользователями" />
+            </ListItem>
+            <ListItem button component={Link} to="/course-editor" onClick={toggleDrawer}>
+              <EditOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+              <ListItemText primary="Редактор курсов" />
+            </ListItem>
+            <ListItem button component={Link} to="/user-progress" onClick={toggleDrawer}>
+              <BookOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+              <ListItemText primary="Прогресс пользователей" />
+            </ListItem>
+          </>
+        )}
         <ListItem button component={Link} to="/settings" onClick={toggleDrawer}>
           <SettingOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Настройки" />
@@ -122,6 +132,12 @@ const AppContent: React.FC = () => {
           <MessageOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Чат" />
         </ListItem>
+        {userRole == 'STUDENT' && (
+          <ListItem button component={Link} to="/courses" onClick={toggleDrawer}>
+            <EditOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
+            <ListItemText primary="Курсы" />
+          </ListItem>
+        )}
         <ListItem button onClick={handleLogout}>
           <LogoutOutlined style={{ fontSize: '20px', marginRight: '10px' }} />
           <ListItemText primary="Выйти" />
@@ -157,20 +173,20 @@ const AppContent: React.FC = () => {
           >
             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <Typography
-                variant="h6"
+                variant="h2"
                 noWrap
                 component="div"
                 sx={{
                   fontWeight: 'bold',
                   color: '#FFFFFF',
-                  fontSize: '18px !important',
+                  fontSize: '20px !important',
                   letterSpacing: '2px !important',
                   display: 'flex !important',
                   justifyContent: 'center !important',
                   textAlign: 'center',
                 }}
               >
-                LEM
+                Uruser
               </Typography>
             </Box>
           </Toolbar>
@@ -298,6 +314,14 @@ const AppContent: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <CourseModulesEditor />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/courses"
+              element={
+                <ProtectedRoute>
+                  <CoursesStudent />
                 </ProtectedRoute>
               }
             />

@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import {
   Box,
-  Button,
   Card,
   CardContent,
   CardMedia,
   Typography,
   Grid,
+  Button,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
-import $api from '../api/axiosInstance'; // Импортируйте ваш настроенный экземпляр axios
+import $api from '../api/axiosInstance'; // Import your configured axios instance
 
-const Courses: React.FC = () => {
+const CoursesStudent: React.FC = () => {
   const navigate = useNavigate();
   const [courses, setCourses] = useState<any[]>([]);
+  const [completedCourses, setCompletedCourses] = useState<number[]>([]);
 
   useEffect(() => {
     const fetchCourses = async () => {
@@ -36,31 +37,18 @@ const Courses: React.FC = () => {
     };
 
     fetchCourses();
+    const storedCompletedCourses = JSON.parse(
+      localStorage.getItem('completedCourses') || '[]'
+    );
+    setCompletedCourses(storedCompletedCourses);
   }, []);
 
-  const handleCreateCourse = () => {
-    navigate('/create-course');
-  };
-
-  const handleEditModules = (courseId: number) => {
-    navigate(`/edit-course/${courseId}`);
-  };
-
-  const handleDeleteCourse = async (courseId: number) => {
-    try {
-      await $api.delete(`/api/v1/course/${courseId}`);
-      setCourses(courses.filter(course => course.id !== courseId));
-      console.log('Course deleted successfully');
-    } catch (error) {
-      console.error('Error deleting course:', error);
-    }
+  const handleJoinCourse = (courseId: number) => {
+    navigate(`/course/${courseId}`);
   };
 
   return (
     <Box sx={{ flexGrow: 1, padding: 3 }}>
-      <Button variant="contained" onClick={handleCreateCourse} sx={{ marginBottom: 3 }}>
-        Создать курс
-      </Button>
       <Grid container spacing={3}>
         {Array.isArray(courses) && courses.length > 0 ? (
           courses.map(course => (
@@ -84,7 +72,7 @@ const Courses: React.FC = () => {
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ marginTop: 2, marginBottom: 2 }} // Добавление margin
+                    sx={{ marginTop: 2, marginBottom: 2 }} // Adding margin
                   >
                     {course.description}
                   </Typography>
@@ -94,20 +82,19 @@ const Courses: React.FC = () => {
                     justifyContent="center"
                     width="100%"
                   >
-                    <Button
-                      variant="contained"
-                      onClick={() => handleEditModules(course.id)}
-                      sx={{ marginBottom: 1 }}
-                    >
-                      Редактировать
-                    </Button>
-                    <Button
-                      variant="contained"
-                      color="error"
-                      onClick={() => handleDeleteCourse(course.id)}
-                    >
-                      Удалить
-                    </Button>
+                    {completedCourses.includes(course.id) ? (
+                      <Typography variant="h6" color="success.main">
+                        Курс пройден
+                      </Typography>
+                    ) : (
+                      <Button
+                        variant="contained"
+                        onClick={() => handleJoinCourse(course.id)}
+                        sx={{ marginBottom: 1 }}
+                      >
+                        Присоединиться
+                      </Button>
+                    )}
                   </Box>
                 </CardContent>
               </Card>
@@ -123,4 +110,4 @@ const Courses: React.FC = () => {
   );
 };
 
-export default Courses;
+export default CoursesStudent;

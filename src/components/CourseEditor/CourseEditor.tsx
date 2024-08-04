@@ -14,11 +14,13 @@ import '@uiw/react-md-editor/markdown-editor.css';
 import '@uiw/react-markdown-preview/markdown.css';
 import TestEditor from '../TestEditor/TestEditor';
 import $api from '../../api/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 
 const CourseModulesEditor: React.FC = () => {
   const [mainModules, setMainModules] = useState<
     Array<{ title: string; submodules: Array<{ type: string; content: any }> }>
   >([]);
+  const navigate = useNavigate();
   const [image, setImage] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
@@ -136,6 +138,7 @@ const CourseModulesEditor: React.FC = () => {
     try {
       const response = await $api.post('/api/v1/course', courseData);
       console.log('Course created successfully:', response.data);
+      navigate('/course-editor');
     } catch (error) {
       console.error('Error creating course:', error);
     }

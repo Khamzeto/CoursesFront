@@ -19,14 +19,14 @@ interface User {
   role: string;
 }
 
-const UserManagement: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+const initialUsers: User[] = [
+  { key: '1', username: 'khamzeto', role: 'Студент' },
+  { key: '2', username: 'rosul', role: 'Студент' },
+  { key: '3', username: 'rozomcool', role: 'Студент' },
+];
 
-  useEffect(() => {
-    axios.get('/api/users').then(response => {
-      setUsers(response.data);
-    });
-  }, []);
+const UserManagement: React.FC = () => {
+  const [users, setUsers] = useState<User[]>(initialUsers);
 
   const deleteUser = (key: string) => {
     setUsers(users.filter(user => user.key !== key));
@@ -41,6 +41,7 @@ const UserManagement: React.FC = () => {
             <TableCell>Имя пользователя</TableCell>
             <TableCell>Роль</TableCell>
             <TableCell>Действия</TableCell>
+            <TableCell>Связаться</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
@@ -55,7 +56,16 @@ const UserManagement: React.FC = () => {
                     color="secondary"
                     onClick={() => deleteUser(user.key)}
                   >
-                    Delete
+                    Удалить
+                  </Button>
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => deleteUser(user.key)}
+                  >
+                    Написать
                   </Button>
                 </TableCell>
               </TableRow>
@@ -65,7 +75,7 @@ const UserManagement: React.FC = () => {
               <TableCell colSpan={3} align="center">
                 <Box display="flex" justifyContent="center" alignItems="center">
                   <InboxIcon sx={{ mr: 1 }} />
-                  No data
+                  Нет данных
                 </Box>
               </TableCell>
             </TableRow>

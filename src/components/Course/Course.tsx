@@ -20,9 +20,12 @@ import {
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import MenuIcon from '@mui/icons-material/Menu';
 import ReactMarkdown from 'react-markdown';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import $api from '../../api/axiosInstance';
 import remarkGfm from 'remark-gfm';
+import { Components } from 'react-markdown';
+import MarkdownTypography from './Typography';
+import renderers from './Typography';
 
 interface Variant {
   variant: string;
@@ -54,6 +57,7 @@ interface Chapter {
 }
 
 interface CourseData {
+  id: number;
   title: string;
   description: string;
   ownerId: number;
@@ -68,11 +72,13 @@ const drawerWidth = 240;
 
 const Course = () => {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+
   const [course, setCourse] = useState<CourseData | null>(null);
   const [selectedContent, setSelectedContent] = useState('');
   const [selectedTest, setSelectedTest] = useState<Test | null>(null);
-  const [selectedChapter, setSelectedChapter] = useState<number | null>(null);
-  const [selectedLesson, setSelectedLesson] = useState<number | null>(null);
+  const [selectedChapter, setSelectedChapter] = useState<number | null>(0);
+  const [selectedLesson, setSelectedLesson] = useState<number | null>(0);
   const [completedLessons, setCompletedLessons] = useState<Set<string>>(new Set());
   const [mobileOpen, setMobileOpen] = useState(false);
   const [selectedAnswers, setSelectedAnswers] = useState<Set<number>>(new Set());
@@ -87,8 +93,22 @@ const Course = () => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
+        console.log('Fetching course data');
         const response = await $api.get(`/api/v1/course/${id}`);
-        setCourse(response.data);
+        const courseData = response.data;
+        console.log('Course Data:', courseData);
+        setCourse(courseData);
+
+        if (courseData.chapters.length > 0 && courseData.chapters[0].lessons.length > 0) {
+          const firstChapter = courseData.chapters[0];
+          const firstLesson = firstChapter.lessons[0];
+          const lectureContent = firstLesson.lectures[0]?.content || '';
+          console.log('Lecture Content:', lectureContent);
+          setSelectedContent(lectureContent);
+          setSelectedTest(firstLesson.tests[0] || null);
+          setSelectedChapter(0);
+          setSelectedLesson(0);
+        }
       } catch (error) {
         console.error('Error fetching course:', error);
       }
@@ -97,12 +117,18 @@ const Course = () => {
     fetchCourse();
   }, [id]);
 
+  useEffect(() => {
+    console.log('Selected Content on render:', selectedContent);
+  }, [selectedContent]);
+
   const handleLessonClick = (
     chapterIndex: number,
     lessonIndex: number,
     content: string,
     test: Test | null
   ) => {
+    console.log('handleLessonClick called');
+    console.log('Selected Content:', content);
     setSelectedChapter(chapterIndex);
     setSelectedLesson(lessonIndex);
     setSelectedContent(content);
@@ -141,13 +167,15 @@ const Course = () => {
       const lessonKey = `${selectedChapter}-${selectedLesson}`;
       setCompletedLessons(prev => new Set(prev).add(lessonKey));
 
-      setFinalResults(prev => [
-        ...prev,
-        {
-          lesson: `${chapter.title} - ${chapter.lessons[selectedLesson].title}`,
-          results: testResults,
-        },
-      ]);
+      if (selectedTest) {
+        setFinalResults(prev => [
+          ...prev,
+          {
+            lesson: `${chapter.title} - ${chapter.lessons[selectedLesson].title}`,
+            results: testResults,
+          },
+        ]);
+      }
 
       if (selectedLesson < chapter.lessons.length - 1) {
         handleLessonClick(
@@ -167,7 +195,18 @@ const Course = () => {
         setSelectedContent('Курс завершен!');
         setSelectedTest(null);
         calculateAccuracy();
+        if (course && course.id) {
+          saveCourseCompletion(course.id);
+        }
       }
+    }
+  };
+
+  const saveCourseCompletion = (courseId: number) => {
+    const completedCourses = JSON.parse(localStorage.getItem('completedCourses') || '[]');
+    if (!completedCourses.includes(courseId)) {
+      completedCourses.push(courseId);
+      localStorage.setItem('completedCourses', JSON.stringify(completedCourses));
     }
   };
 
@@ -181,7 +220,7 @@ const Course = () => {
         acc + result.results.filter((res: any) => res.correct && res.selected).length,
       0
     );
-    setAccuracy((correctAnswers / totalQuestions) * 100);
+    setAccuracy(totalQuestions > 0 ? (correctAnswers / totalQuestions) * 100 : null);
   };
 
   const handleDrawerToggle = () => {
@@ -251,82 +290,6 @@ const Course = () => {
     </Box>
   );
 
-  const renderers = {
-    h1: ({ children }: any) => (
-      <Typography
-        variant="h1"
-        component="h1"
-        gutterBottom
-        sx={{ fontSize: '2.5rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    h2: ({ children }: any) => (
-      <Typography
-        variant="h2"
-        component="h2"
-        gutterBottom
-        sx={{ fontSize: '2.0rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    h3: ({ children }: any) => (
-      <Typography
-        variant="h3"
-        component="h3"
-        gutterBottom
-        sx={{ fontSize: '1.75rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    h4: ({ children }: any) => (
-      <Typography
-        variant="h4"
-        component="h4"
-        gutterBottom
-        sx={{ fontSize: '1.5rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    h5: ({ children }: any) => (
-      <Typography
-        variant="h5"
-        component="h5"
-        gutterBottom
-        sx={{ fontSize: '1.25rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    h6: ({ children }: any) => (
-      <Typography
-        variant="h6"
-        component="h6"
-        gutterBottom
-        sx={{ fontSize: '1.0rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    p: ({ children }: any) => (
-      <Typography
-        variant="body1"
-        component="p"
-        gutterBottom
-        sx={{ fontSize: '1.0rem !important' }}
-      >
-        {children}
-      </Typography>
-    ),
-    img: ({ node, ...props }: any) => (
-      <Box component="img" {...props} sx={{ maxWidth: '100%', height: 'auto' }} />
-    ),
-  };
-
   return (
     <Box sx={{ display: 'flex' }}>
       <CssBaseline />
@@ -342,7 +305,7 @@ const Course = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div">
-            Курс по веб-разработке
+            {course ? course.title : 'Курс по веб-разработке'}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -383,9 +346,25 @@ const Course = () => {
       >
         <Toolbar />
         <Container>
+          {!selectedChapter && !selectedLesson && course && (
+            <Box sx={{ display: 'flex', alignItems: 'center', marginBottom: 2 }}>
+              {course.preview && (
+                <img
+                  src={course.preview}
+                  alt={course.title}
+                  style={{ maxWidth: '150px', marginRight: '16px' }}
+                />
+              )}
+              <Box>
+                <Typography variant="h4">{course.title}</Typography>
+                <Typography variant="body1">{course.description}</Typography>
+              </Box>
+            </Box>
+          )}
           <ReactMarkdown components={renderers} remarkPlugins={[remarkGfm]}>
             {selectedContent}
           </ReactMarkdown>
+
           {selectedTest && (
             <Paper sx={{ padding: 3, marginTop: 2 }}>
               <Typography variant="h6" gutterBottom>
@@ -409,7 +388,7 @@ const Course = () => {
                 onClick={handleTestSubmit}
                 disabled={selectedAnswers.size === 0}
               >
-                Проверить ответ
+                Отправить
               </Button>
               {isTestCompleted && testResults && (
                 <Box sx={{ mt: 2 }}>
@@ -426,11 +405,16 @@ const Course = () => {
                       {result.correct ? 'Правильно' : 'Неправильно'}
                     </Typography>
                   ))}
-                  <Button variant="contained" sx={{ mt: 2 }} onClick={handleNextStep}>
-                    Следующий шаг
-                  </Button>
                 </Box>
               )}
+              <Button
+                variant="contained"
+                sx={{ mt: 2, ml: 2 }}
+                onClick={handleNextStep}
+                disabled={!isTestCompleted}
+              >
+                Следующий шаг
+              </Button>
             </Paper>
           )}
           {!selectedTest && selectedContent !== 'Курс завершен!' && (
@@ -438,24 +422,28 @@ const Course = () => {
               variant="contained"
               sx={{ mt: 2 }}
               onClick={handleNextStep}
-              disabled={
-                selectedChapter === null || selectedLesson === null || !isTestCompleted
-              }
+              disabled={selectedChapter === null || selectedLesson === null}
             >
               Следующий шаг
             </Button>
           )}
-          {selectedContent === 'Курс завершен!' && accuracy !== null && (
+          {selectedContent === 'Курс завершен!' && (
             <Paper sx={{ padding: 3, marginTop: 2 }}>
               <Typography variant="h6" gutterBottom>
                 Курс завершен!
               </Typography>
-              <Typography variant="h6" gutterBottom>
-                Процент правильных ответов: {accuracy.toFixed(2)}%
-              </Typography>
+              {accuracy !== null && (
+                <Typography variant="h6" gutterBottom>
+                  Процент правильных ответов: {accuracy.toFixed(2)}%
+                </Typography>
+              )}
+              <Button sx={{ mt: 2 }} color="inherit" onClick={() => navigate('/')}>
+                Назад
+              </Button>
+
               <Button
                 variant="contained"
-                sx={{ mt: 2 }}
+                sx={{ mt: 2, ml: 2 }}
                 onClick={() => setShowFinalResults(true)}
               >
                 Посмотреть результаты
@@ -481,7 +469,7 @@ const Course = () => {
                           res.selected && !res.correct ? 'line-through' : 'none',
                       }}
                     >
-                      {selectedTest?.variants[idx].variant} -{' '}
+                      {result.lesson} - {selectedTest?.variants[idx].variant} -{' '}
                       {res.correct ? 'Правильно' : 'Неправильно'}
                     </Typography>
                   ))}

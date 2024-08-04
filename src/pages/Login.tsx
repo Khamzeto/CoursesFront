@@ -44,6 +44,7 @@ const Login: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
+          paddingLeft: 2,
         }}
       >
         <Typography component="h1" variant="h5">
@@ -84,10 +85,20 @@ const Login: React.FC = () => {
             </Typography>
           )}
           <Box display="flex" justifyContent="space-between" width="100%">
-            <Link component={RouterLink} to="/register" variant="body2">
+            <Link
+              component={RouterLink}
+              to="/register"
+              variant="body2"
+              style={{ color: 'white' }}
+            >
               Нет аккаунта? Зарегистрироваться
             </Link>
-            <Link component={RouterLink} to="/forgot-password" variant="body2">
+            <Link
+              component={RouterLink}
+              to="/login"
+              variant="body2"
+              style={{ color: 'white' }}
+            >
               Забыли пароль?
             </Link>
           </Box>
